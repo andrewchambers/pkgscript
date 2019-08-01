@@ -785,6 +785,7 @@ func (p *parser) parseArgs() []Expr {
 //  primary = IDENT
 //          | INT | FLOAT
 //          | STRING
+//          | RENDER_TEMPLATE
 //          | '[' ...                    // list literal or comprehension
 //          | '{' ...                    // dict literal or comprehension
 //          | '(' ...                    // tuple or parenthesized expression
@@ -793,6 +794,9 @@ func (p *parser) parsePrimary() Expr {
 	switch p.tok {
 	case IDENT:
 		return p.parseIdent()
+
+	case RENDER_LIT, RENDER_LIT_FIN:
+		return p.parseRenderExpr()
 
 	case INT, FLOAT, STRING:
 		var val interface{}
@@ -846,6 +850,39 @@ func (p *parser) parsePrimary() Expr {
 	}
 	p.in.errorf(p.in.pos, "got %#v, want primary expression", p.tok)
 	panic("unreachable")
+}
+
+// render_template = RENDER_LIT
+//      | XXX TODO
+func (p *parser) parseRenderExpr() Expr {
+	start := p.tokval.pos
+	cur := start
+	end := cur
+	var chunks []Expr
+	for {
+		cur = p.tokval.pos
+
+		tok := p.tok
+		chunks = append(chunks, &Literal{
+			Token:    p.tok,
+			TokenPos: cur,
+			Raw:      p.tokval.raw,
+			Value:    p.tokval.string,
+		})
+		p.nextToken()
+
+		if tok == RENDER_LIT_FIN {
+			end = cur
+			break
+		} else {
+			chunks = append(chunks, p.parseExpr(true))
+			if p.tok != RENDER_LIT && p.tok != RENDER_LIT_FIN {
+				p.in.errorf(p.in.pos, "expected a single expression")
+			}
+		}
+	}
+
+	return &RenderExpr{Start: start, Chunks: chunks, End: end}
 }
 
 // list = '[' ']'

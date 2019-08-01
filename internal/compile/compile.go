@@ -1289,6 +1289,12 @@ func (fcomp *fcomp) expr(e syntax.Expr) {
 		// e.Value is int64, float64, *bigInt, or string.
 		fcomp.emit1(CONSTANT, fcomp.pcomp.constantIndex(e.Value))
 
+	case *syntax.RenderExpr:
+		for _, x := range e.Chunks {
+			fcomp.expr(x)
+		}
+		fcomp.emit1(MAKELIST, uint32(len(e.Chunks)))
+
 	case *syntax.ListExpr:
 		for _, x := range e.List {
 			fcomp.expr(x)

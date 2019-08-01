@@ -619,6 +619,11 @@ func (r *resolver) expr(e syntax.Expr) {
 			r.errorf(e.TokenPos, doesnt+"support floating point")
 		}
 
+	case *syntax.RenderExpr:
+		for _, x := range e.Chunks {
+			r.expr(x)
+		}
+
 	case *syntax.ListExpr:
 		for _, x := range e.List {
 			r.expr(x)
