@@ -229,6 +229,7 @@ func (*Ident) expr()         {}
 func (*IndexExpr) expr()     {}
 func (*LambdaExpr) expr()    {}
 func (*ListExpr) expr()      {}
+func (*RenderExpr) expr()    {}
 func (*Literal) expr()       {}
 func (*ParenExpr) expr()     {}
 func (*SliceExpr) expr()     {}
@@ -426,6 +427,19 @@ type ListExpr struct {
 
 func (x *ListExpr) Span() (start, end Position) {
 	return x.Lbrack, x.Rbrack.add("]")
+}
+
+// A RenderExpr represents a : ``` template ```.
+type RenderExpr struct {
+	commentsRef
+	Start  Position
+	Chunks []Expr
+	End    Position
+}
+
+func (x *RenderExpr) Span() (start, end Position) {
+	lastChunk := x.Chunks[len(x.Chunks)-1].(*Literal)
+	return x.Start, x.End.add(lastChunk.Raw)
 }
 
 // CondExpr represents the conditional: X if COND else ELSE.

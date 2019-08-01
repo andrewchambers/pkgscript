@@ -7,6 +7,7 @@ package syntax
 // A lexical scanner for Starlark.
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -98,6 +99,9 @@ const (
 	RETURN
 	WHILE
 
+	RENDER_LIT
+	RENDER_LIT_FIN
+
 	maxToken
 )
 
@@ -113,73 +117,75 @@ func (tok Token) GoString() string {
 }
 
 var tokenNames = [...]string{
-	ILLEGAL:       "illegal token",
-	EOF:           "end of file",
-	NEWLINE:       "newline",
-	INDENT:        "indent",
-	OUTDENT:       "outdent",
-	IDENT:         "identifier",
-	INT:           "int literal",
-	FLOAT:         "float literal",
-	STRING:        "string literal",
-	PLUS:          "+",
-	MINUS:         "-",
-	STAR:          "*",
-	SLASH:         "/",
-	SLASHSLASH:    "//",
-	PERCENT:       "%",
-	AMP:           "&",
-	PIPE:          "|",
-	CIRCUMFLEX:    "^",
-	LTLT:          "<<",
-	GTGT:          ">>",
-	TILDE:         "~",
-	DOT:           ".",
-	COMMA:         ",",
-	EQ:            "=",
-	SEMI:          ";",
-	COLON:         ":",
-	LPAREN:        "(",
-	RPAREN:        ")",
-	LBRACK:        "[",
-	RBRACK:        "]",
-	LBRACE:        "{",
-	RBRACE:        "}",
-	LT:            "<",
-	GT:            ">",
-	GE:            ">=",
-	LE:            "<=",
-	EQL:           "==",
-	NEQ:           "!=",
-	PLUS_EQ:       "+=",
-	MINUS_EQ:      "-=",
-	STAR_EQ:       "*=",
-	SLASH_EQ:      "/=",
-	SLASHSLASH_EQ: "//=",
-	PERCENT_EQ:    "%=",
-	AMP_EQ:        "&=",
-	PIPE_EQ:       "|=",
-	CIRCUMFLEX_EQ: "^=",
-	LTLT_EQ:       "<<=",
-	GTGT_EQ:       ">>=",
-	STARSTAR:      "**",
-	AND:           "and",
-	BREAK:         "break",
-	CONTINUE:      "continue",
-	DEF:           "def",
-	ELIF:          "elif",
-	ELSE:          "else",
-	FOR:           "for",
-	IF:            "if",
-	IN:            "in",
-	LAMBDA:        "lambda",
-	LOAD:          "load",
-	NOT:           "not",
-	NOT_IN:        "not in",
-	OR:            "or",
-	PASS:          "pass",
-	RETURN:        "return",
-	WHILE:         "while",
+	ILLEGAL:        "illegal token",
+	EOF:            "end of file",
+	NEWLINE:        "newline",
+	INDENT:         "indent",
+	OUTDENT:        "outdent",
+	IDENT:          "identifier",
+	INT:            "int literal",
+	FLOAT:          "float literal",
+	STRING:         "string literal",
+	RENDER_LIT:     "render literal",
+	RENDER_LIT_FIN: "render literal",
+	PLUS:           "+",
+	MINUS:          "-",
+	STAR:           "*",
+	SLASH:          "/",
+	SLASHSLASH:     "//",
+	PERCENT:        "%",
+	AMP:            "&",
+	PIPE:           "|",
+	CIRCUMFLEX:     "^",
+	LTLT:           "<<",
+	GTGT:           ">>",
+	TILDE:          "~",
+	DOT:            ".",
+	COMMA:          ",",
+	EQ:             "=",
+	SEMI:           ";",
+	COLON:          ":",
+	LPAREN:         "(",
+	RPAREN:         ")",
+	LBRACK:         "[",
+	RBRACK:         "]",
+	LBRACE:         "{",
+	RBRACE:         "}",
+	LT:             "<",
+	GT:             ">",
+	GE:             ">=",
+	LE:             "<=",
+	EQL:            "==",
+	NEQ:            "!=",
+	PLUS_EQ:        "+=",
+	MINUS_EQ:       "-=",
+	STAR_EQ:        "*=",
+	SLASH_EQ:       "/=",
+	SLASHSLASH_EQ:  "//=",
+	PERCENT_EQ:     "%=",
+	AMP_EQ:         "&=",
+	PIPE_EQ:        "|=",
+	CIRCUMFLEX_EQ:  "^=",
+	LTLT_EQ:        "<<=",
+	GTGT_EQ:        ">>=",
+	STARSTAR:       "**",
+	AND:            "and",
+	BREAK:          "break",
+	CONTINUE:       "continue",
+	DEF:            "def",
+	ELIF:           "elif",
+	ELSE:           "else",
+	FOR:            "for",
+	IF:             "if",
+	IN:             "in",
+	LAMBDA:         "lambda",
+	LOAD:           "load",
+	NOT:            "not",
+	NOT_IN:         "not in",
+	OR:             "or",
+	PASS:           "pass",
+	RETURN:         "return",
+	WHILE:          "while",
 }
 
 // A Position describes the location of a rune of input.
@@ -234,26 +240,28 @@ func (p Position) isBefore(q Position) bool {
 
 // An scanner represents a single input file being parsed.
 type scanner struct {
-	rest           []byte    // rest of input (in REPL, a line of input)
-	token          []byte    // token being scanned
-	pos            Position  // current input position
-	depth          int       // nesting of [ ] { } ( )
-	indentstk      []int     // stack of indentation levels
-	dents          int       // number of saved INDENT (>0) or OUTDENT (<0) tokens to return
-	lineStart      bool      // after NEWLINE; convert spaces to indentation tokens
-	keepComments   bool      // accumulate comments in slice
-	lineComments   []Comment // list of full line comments (if keepComments)
-	suffixComments []Comment // list of suffix comments (if keepComments)
+	rest           []byte            // rest of input (in REPL, a line of input)
+	token          []byte            // token being scanned
+	pos            Position          // current input position
+	renderLitState []*renderLitState // state spanning multiple render literal chunks.
+	depth          int               // nesting of [ ] { } ( )
+	indentstk      []int             // stack of indentation levels
+	dents          int               // number of saved INDENT (>0) or OUTDENT (<0) tokens to return
+	lineStart      bool              // after NEWLINE; convert spaces to indentation tokens
+	keepComments   bool              // accumulate comments in slice
+	lineComments   []Comment         // list of full line comments (if keepComments)
+	suffixComments []Comment         // list of suffix comments (if keepComments)
 
 	readline func() ([]byte, error) // read next line of input (REPL only)
 }
 
 func newScanner(filename string, src interface{}, keepComments bool) (*scanner, error) {
 	sc := &scanner{
-		pos:          Position{file: &filename, Line: 1, Col: 1},
-		indentstk:    make([]int, 1, 10), // []int{0} + spare capacity
-		lineStart:    true,
-		keepComments: keepComments,
+		pos:            Position{file: &filename, Line: 1, Col: 1},
+		renderLitState: make([]*renderLitState, 0, 1), // anticipate nested render literals being rare.
+		indentstk:      make([]int, 1, 10),            // []int{0} + spare capacity
+		lineStart:      true,
+		keepComments:   keepComments,
 	}
 	sc.readline, _ = src.(func() ([]byte, error)) // REPL only
 	if sc.readline == nil {
@@ -624,6 +632,16 @@ start:
 		return sc.scanString(val, c)
 	}
 
+	if c == '`' {
+		for i := 0; i < 3; i++ {
+			if sc.peekRune() != '`' {
+				sc.errorf(sc.pos, "invalid render delimiter")
+			}
+			sc.readRune()
+		}
+		return sc.scanRenderLit(val, true)
+	}
+
 	// identifier or keyword
 	if isIdentStart(c) {
 		// raw string literal
@@ -667,6 +685,13 @@ start:
 		} else {
 			sc.depth--
 		}
+
+		// We hit a '}' at the nesting depth we previously paused scanning
+		// a render template, resume scanning the render literal.
+		if c == '}' && len(sc.renderLitState) > 0 && sc.depth == sc.renderLitState[len(sc.renderLitState)-1].resumeDepth {
+			return sc.scanRenderLit(val, false)
+		}
+
 		sc.readRune()
 		sc.endToken(val)
 		switch c {
@@ -798,6 +823,121 @@ start:
 
 	sc.errorf(sc.pos, "unexpected input character %#q", c)
 	panic("unreachable")
+}
+
+// track state across nested render literals
+type renderLitState struct {
+	raw            bytes.Buffer
+	cooked         bytes.Buffer
+	resumeDepth    int
+	st             int
+	skipTillIndent int
+	currentIndent  int
+	endOfIndent    bool
+}
+
+func newRenderLitState() *renderLitState {
+	return &renderLitState{
+		skipTillIndent: -1,
+	}
+}
+
+func (sc *scanner) scanRenderLit(val *tokenValue, litStart bool) Token {
+	var state *renderLitState
+
+	if litStart {
+		state = newRenderLitState()
+		sc.renderLitState = append(sc.renderLitState, state)
+		state.raw.Write([]byte("```"))
+		// Skip initial blank new line.
+		if sc.peekRune() == '\n' {
+			state.raw.WriteRune(sc.readRune())
+		}
+	} else {
+		state = sc.renderLitState[len(sc.renderLitState)-1]
+		state.resumeDepth = -1
+		sc.readRune()
+		state.raw.Write([]byte("}"))
+	}
+
+	for {
+		if sc.eof() {
+			sc.error(val.pos, "unexpected EOF in render literal")
+		}
+		c := sc.readRune()
+		state.raw.WriteRune(c)
+
+		switch c {
+		case ' ', '\t':
+			if !state.endOfIndent {
+				state.currentIndent += 1
+				if state.skipTillIndent != -1 && state.currentIndent > state.skipTillIndent {
+					state.endOfIndent = true
+				}
+			}
+		case '\n':
+			if state.skipTillIndent == -1 && state.currentIndent != 0 {
+				state.skipTillIndent = state.currentIndent
+			}
+			state.currentIndent = 0
+			state.endOfIndent = false
+		default:
+			if state.skipTillIndent == -1 {
+				state.skipTillIndent = state.currentIndent
+			}
+			state.endOfIndent = true
+		}
+
+		// Each state corresponds to the number of ` we have seen.
+		switch state.st {
+		case 0:
+			switch c {
+			case '`':
+				state.st = 1
+			default:
+				if state.endOfIndent || c == '\n' {
+					state.cooked.WriteRune(c)
+				}
+			}
+
+		case 1:
+			switch c {
+			case '`':
+				state.st = 2
+
+			case '{':
+				val.raw = state.raw.String()
+				val.string = state.cooked.String()
+				state.raw.Reset()
+				state.cooked.Reset()
+				state.resumeDepth = sc.depth
+				sc.depth += 1
+				state.st = 0
+				return RENDER_LIT
+
+			default:
+				state.cooked.WriteRune('`')
+				state.cooked.WriteRune(c)
+				state.st = 0
+			}
+
+		case 2:
+			switch c {
+
+			case '`':
+				val.raw = state.raw.String()
+				val.string = state.cooked.String()
+				sc.renderLitState = sc.renderLitState[:len(sc.renderLitState)-1]
+				return RENDER_LIT_FIN
+
+			default:
+				state.cooked.WriteRune('`')
+				state.cooked.WriteRune('`')
+				state.cooked.WriteRune(c)
+				state.st = 0
+			}
+		}
+	}
 }
 
 func (sc *scanner) scanString(val *tokenValue, quote rune) Token {
