@@ -130,3 +130,4 @@ TODO:
 - the grammar is (mostly) in LL(1) style so, for example,
   dot expressions are formed suffixes, not complete expressions,
   which makes the spec harder to read.  Reorganize into non-LL(1) form?
+- Render expressions

@@ -66,6 +66,11 @@ func Walk(n Node, f func(Node) bool) {
 	case *Ident, *Literal:
 		// no-op
 
+	case *RenderExpr:
+		for _, x := range n.Chunks {
+			Walk(x, f)
+		}
+
 	case *ListExpr:
 		for _, x := range n.List {
 			Walk(x, f)
