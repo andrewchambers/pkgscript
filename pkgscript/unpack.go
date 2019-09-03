@@ -1,4 +1,4 @@
-package starlark
+package pkgscript
 
 // This file defines the Unpack helper functions used by
 // built-in functions to interpret their call arguments.
@@ -172,7 +172,7 @@ func unpackOneArg(v Value, ptr interface{}) error {
 		}
 		*ptr = it
 	default:
-		// v must have type *V, where V is some subtype of starlark.Value.
+		// v must have type *V, where V is some subtype of pkgscript.Value.
 		ptrv := reflect.ValueOf(ptr)
 		if ptrv.Kind() != reflect.Ptr {
 			log.Panicf("internal error: not a pointer: %T", ptr)

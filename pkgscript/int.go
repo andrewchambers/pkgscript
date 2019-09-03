@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark
+package pkgscript
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"strconv"
 
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // Int is the type of a Starlark int.
@@ -26,7 +26,7 @@ type Int struct {
 func newBig(x int64) *big.Int {
 	if 0 <= x && int64(big.Word(x)) == x {
 		// x is guaranteed to fit into a single big.Word.
-		// Most starlark ints are small,
+		// Most pkgscript ints are small,
 		// but math/big assumes that since you've chosen to use math/big,
 		// your big.Ints will probably grow, so it over-allocates.
 		// Avoid that over-allocation by manually constructing a single-word slice.

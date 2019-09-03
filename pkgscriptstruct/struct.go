@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package starlarkstruct defines the Starlark types 'struct' and
+// Package pkgscriptstruct defines the Starlark types 'struct' and
 // 'module', both optional language extensions.
 //
-package starlarkstruct // import "go.starlark.net/starlarkstruct"
+package pkgscriptstruct // import "github.com/andrewchambers/pkgscript/pkgscriptstruct"
 
 // It is tempting to introduce a variant of Struct that is a wrapper
 // around a Go struct value, for stronger typing guarantees and more
@@ -27,8 +27,8 @@ import (
 	"sort"
 	"strings"
 
-	"go.starlark.net/starlark"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/pkgscript"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // Make is the implementation of a built-in function that instantiates
@@ -36,11 +36,11 @@ import (
 //
 // An application can add 'struct' to the Starlark environment like so:
 //
-// 	globals := starlark.StringDict{
-// 		"struct":  starlark.NewBuiltin("struct", starlarkstruct.Make),
+// 	globals := pkgscript.StringDict{
+// 		"struct":  pkgscript.NewBuiltin("struct", pkgscriptstruct.Make),
 // 	}
 //
-func Make(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func Make(_ *pkgscript.Thread, _ *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
 	if len(args) > 0 {
 		return nil, fmt.Errorf("struct: unexpected positional arguments")
 	}
@@ -48,8 +48,8 @@ func Make(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs [
 }
 
 // FromKeywords returns a new struct instance whose fields are specified by the
-// key/value pairs in kwargs.  (Each kwargs[i][0] must be a starlark.String.)
-func FromKeywords(constructor starlark.Value, kwargs []starlark.Tuple) *Struct {
+// key/value pairs in kwargs.  (Each kwargs[i][0] must be a pkgscript.String.)
+func FromKeywords(constructor pkgscript.Value, kwargs []pkgscript.Tuple) *Struct {
 	if constructor == nil {
 		panic("nil constructor")
 	}
@@ -58,7 +58,7 @@ func FromKeywords(constructor starlark.Value, kwargs []starlark.Tuple) *Struct {
 		entries:     make(entries, 0, len(kwargs)),
 	}
 	for _, kwarg := range kwargs {
-		k := string(kwarg[0].(starlark.String))
+		k := string(kwarg[0].(pkgscript.String))
 		v := kwarg[1]
 		s.entries = append(s.entries, entry{k, v})
 	}
@@ -68,7 +68,7 @@ func FromKeywords(constructor starlark.Value, kwargs []starlark.Tuple) *Struct {
 
 // FromStringDict returns a whose elements are those of d.
 // The constructor parameter specifies the constructor; use Default for an ordinary struct.
-func FromStringDict(constructor starlark.Value, d starlark.StringDict) *Struct {
+func FromStringDict(constructor pkgscript.Value, d pkgscript.StringDict) *Struct {
 	if constructor == nil {
 		panic("nil constructor")
 	}
@@ -99,13 +99,13 @@ func FromStringDict(constructor starlark.Value, d starlark.StringDict) *Struct {
 //
 // Use Attr to access its fields and AttrNames to enumerate them.
 type Struct struct {
-	constructor starlark.Value
+	constructor pkgscript.Value
 	entries     entries // sorted by name
 }
 
 // Default is the default constructor for structs.
 // It is merely the string "struct".
-const Default = starlark.String("struct")
+const Default = pkgscript.String("struct")
 
 type entries []entry
 
@@ -115,16 +115,16 @@ func (a entries) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 type entry struct {
 	name  string
-	value starlark.Value
+	value pkgscript.Value
 }
 
 var (
-	_ starlark.HasAttrs  = (*Struct)(nil)
-	_ starlark.HasBinary = (*Struct)(nil)
+	_ pkgscript.HasAttrs  = (*Struct)(nil)
+	_ pkgscript.HasBinary = (*Struct)(nil)
 )
 
 // ToStringDict adds a name/value entry to d for each field of the struct.
-func (s *Struct) ToStringDict(d starlark.StringDict) {
+func (s *Struct) ToStringDict(d pkgscript.StringDict) {
 	for _, e := range s.entries {
 		d[e.name] = e.value
 	}
@@ -153,15 +153,15 @@ func (s *Struct) String() string {
 }
 
 // Constructor returns the constructor used to create this struct.
-func (s *Struct) Constructor() starlark.Value { return s.constructor }
+func (s *Struct) Constructor() pkgscript.Value { return s.constructor }
 
 func (s *Struct) Type() string         { return "struct" }
-func (s *Struct) Truth() starlark.Bool { return true } // even when empty
+func (s *Struct) Truth() pkgscript.Bool { return true } // even when empty
 func (s *Struct) Hash() (uint32, error) {
 	// Same algorithm as Tuple.hash, but with different primes.
 	var x, m uint32 = 8731, 9839
 	for _, e := range s.entries {
-		namehash, _ := starlark.String(e.name).Hash()
+		namehash, _ := pkgscript.String(e.name).Hash()
 		x = x ^ 3*namehash
 		y, err := e.value.Hash()
 		if err != nil {
@@ -178,13 +178,13 @@ func (s *Struct) Freeze() {
 	}
 }
 
-func (x *Struct) Binary(op syntax.Token, y starlark.Value, side starlark.Side) (starlark.Value, error) {
+func (x *Struct) Binary(op syntax.Token, y pkgscript.Value, side pkgscript.Side) (pkgscript.Value, error) {
 	if y, ok := y.(*Struct); ok && op == syntax.PLUS {
-		if side == starlark.Right {
+		if side == pkgscript.Right {
 			x, y = y, x
 		}
 
-		if eq, err := starlark.Equal(x.constructor, y.constructor); err != nil {
+		if eq, err := pkgscript.Equal(x.constructor, y.constructor); err != nil {
 			return nil, fmt.Errorf("in %s + %s: error comparing constructors: %v",
 				x.constructor, y.constructor, err)
 		} else if !eq {
@@ -192,7 +192,7 @@ func (x *Struct) Binary(op syntax.Token, y starlark.Value, side starlark.Side) (
 				x.constructor, y.constructor)
 		}
 
-		z := make(starlark.StringDict, x.len()+y.len())
+		z := make(pkgscript.StringDict, x.len()+y.len())
 		for _, e := range x.entries {
 			z[e.name] = e.value
 		}
@@ -206,7 +206,7 @@ func (x *Struct) Binary(op syntax.Token, y starlark.Value, side starlark.Side) (
 }
 
 // Attr returns the value of the specified field.
-func (s *Struct) Attr(name string) (starlark.Value, error) {
+func (s *Struct) Attr(name string) (pkgscript.Value, error) {
 	// Binary search the entries.
 	// This implementation is a specialization of
 	// sort.Search that avoids dynamic dispatch.
@@ -228,7 +228,7 @@ func (s *Struct) Attr(name string) (starlark.Value, error) {
 	if s.constructor != Default {
 		ctor = s.constructor.String() + " "
 	}
-	return nil, starlark.NoSuchAttrError(
+	return nil, pkgscript.NoSuchAttrError(
 		fmt.Sprintf("%sstruct has no .%s attribute", ctor, name))
 }
 
@@ -243,7 +243,7 @@ func (s *Struct) AttrNames() []string {
 	return names
 }
 
-func (x *Struct) CompareSameType(op syntax.Token, y_ starlark.Value, depth int) (bool, error) {
+func (x *Struct) CompareSameType(op syntax.Token, y_ pkgscript.Value, depth int) (bool, error) {
 	y := y_.(*Struct)
 	switch op {
 	case syntax.EQL:
@@ -261,7 +261,7 @@ func structsEqual(x, y *Struct, depth int) (bool, error) {
 		return false, nil
 	}
 
-	if eq, err := starlark.Equal(x.constructor, y.constructor); err != nil {
+	if eq, err := pkgscript.Equal(x.constructor, y.constructor); err != nil {
 		return false, fmt.Errorf("error comparing struct constructors %v and %v: %v",
 			x.constructor, y.constructor, err)
 	} else if !eq {
@@ -271,7 +271,7 @@ func structsEqual(x, y *Struct, depth int) (bool, error) {
 	for i, n := 0, x.len(); i < n; i++ {
 		if x.entries[i].name != y.entries[i].name {
 			return false, nil
-		} else if eq, err := starlark.EqualDepth(x.entries[i].value, y.entries[i].value, depth-1); err != nil {
+		} else if eq, err := pkgscript.EqualDepth(x.entries[i].value, y.entries[i].value, depth-1); err != nil {
 			return false, err
 		} else if !eq {
 			return false, nil

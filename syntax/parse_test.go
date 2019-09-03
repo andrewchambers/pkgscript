@@ -15,9 +15,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.starlark.net/internal/chunkedfile"
-	"go.starlark.net/starlarktest"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/chunkedfile"
+	"github.com/andrewchambers/pkgscript/pkgscripttest"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 func TestExprParseTrees(t *testing.T) {
@@ -297,7 +297,7 @@ func TestCompoundStmt(t *testing.T) {
 		// Even as a 1-liner, the following blank line is required.
 		{"if cond: pass\n\n",
 			`(IfStmt Cond=cond True=((BranchStmt Token=pass)))`},
-		// github.com/google/starlark-go/issues/121
+		// github.com/google/pkgscript-go/issues/121
 		{"a; b; c\n",
 			`(ExprStmt X=a)(ExprStmt X=b)(ExprStmt X=c)`},
 		{"a; b c\n",
@@ -424,7 +424,7 @@ func writeTree(out *bytes.Buffer, x reflect.Value) {
 }
 
 func TestParseErrors(t *testing.T) {
-	filename := starlarktest.DataFile("syntax", "testdata/errors.star")
+	filename := pkgscripttest.DataFile("syntax", "testdata/errors.star")
 	for _, chunk := range chunkedfile.Read(filename, t) {
 		_, err := syntax.Parse(filename, chunk.Source, 0)
 		switch err := err.(type) {
@@ -439,10 +439,10 @@ func TestParseErrors(t *testing.T) {
 	}
 }
 
-// dataFile is the same as starlarktest.DataFile.
+// dataFile is the same as pkgscripttest.DataFile.
 // We make a copy to avoid a dependency cycle.
 var dataFile = func(pkgdir, filename string) string {
-	return filepath.Join(build.Default.GOPATH, "src/go.starlark.net", pkgdir, filename)
+	return filepath.Join(build.Default.GOPATH, "src/github.com/andrewchambers/pkgscript", pkgdir, filename)
 }
 
 func BenchmarkParse(b *testing.B) {

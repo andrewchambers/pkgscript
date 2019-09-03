@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark_test
+package pkgscript_test
 
 // This file defines tests of the Value API.
 
@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"testing"
 
-	"go.starlark.net/starlark"
+	"github.com/andrewchambers/pkgscript/pkgscript"
 )
 
 func TestStringMethod(t *testing.T) {
-	s := starlark.String("hello")
+	s := pkgscript.String("hello")
 	for i, test := range [][2]string{
 		// quoted string:
 		{s.String(), `"hello"`},
@@ -34,11 +34,11 @@ func TestStringMethod(t *testing.T) {
 }
 
 func TestListAppend(t *testing.T) {
-	l := starlark.NewList(nil)
-	l.Append(starlark.String("hello"))
-	res, ok := starlark.AsString(l.Index(0))
+	l := pkgscript.NewList(nil)
+	l.Append(pkgscript.String("hello"))
+	res, ok := pkgscript.AsString(l.Index(0))
 	if !ok {
-		t.Errorf("failed list.Append() got: %s, want: starlark.String", l.Index(0).Type())
+		t.Errorf("failed list.Append() got: %s, want: pkgscript.String", l.Index(0).Type())
 	}
 	if res != "hello" {
 		t.Errorf("failed list.Append() got: %+v, want: hello", res)

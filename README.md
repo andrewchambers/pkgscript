@@ -1,12 +1,12 @@
 
-<!-- This file is the project homepage for go.starlark.net -->
+<!-- This file is the project homepage for go.pkgscript.net -->
 
 # Starlark in Go
 
 This is the home of the _Starlark in Go_ project.
 Starlark in Go is an interpreter for Starlark, implemented in Go.
 Starlark was formerly known as Skylark.
-The new import path for Go packages is `"go.starlark.net/starlark"`.
+The new import path for Go packages is `"go.pkgscript.net/pkgscript"`.
 
 Starlark is a dialect of Python intended for use as a configuration language.
 Like Python, it is an untyped dynamic language with high-level data
@@ -37,13 +37,13 @@ languages and compilers.
 
 * About the Go implementation: [doc/impl.md](doc/impl.md)
 
-* API documentation: [godoc.org/go.starlark.net/starlark](https://godoc.org/go.starlark.net/starlark)
+* API documentation: [godoc.org/go.pkgscript.net/pkgscript](https://godoc.org/go.pkgscript.net/pkgscript)
 
-* Mailing list: [starlark-go](https://groups.google.com/forum/#!forum/starlark-go)
+* Mailing list: [pkgscript-go](https://groups.google.com/forum/#!forum/pkgscript-go)
 
-* Issue tracker: [https://github.com/google/starlark-go/issues](https://github.com/google/starlark-go/issues)
+* Issue tracker: [https://github.com/google/pkgscript-go/issues](https://github.com/google/pkgscript-go/issues)
 
-* Travis CI: [![Travis CI](https://travis-ci.org/google/starlark-go.svg) https://travis-ci.org/google/starlark-go](https://travis-ci.org/google/starlark-go)
+* Travis CI: [![Travis CI](https://travis-ci.org/google/pkgscript-go.svg) https://travis-ci.org/google/pkgscript-go](https://travis-ci.org/google/pkgscript-go)
 
 ### Getting started
 
@@ -52,7 +52,7 @@ Build the code:
 ```shell
 # check out the code and dependencies,
 # and install interpreter in $GOPATH/bin
-$ go get -u go.starlark.net/cmd/starlark
+$ go get -u go.pkgscript.net/cmd/pkgscript
 ```
 
 Run the interpreter:
@@ -68,7 +68,7 @@ coins = {
 print('By name:\t' + ', '.join(sorted(coins.keys())))
 print('By value:\t' + ', '.join(sorted(coins.keys(), key=coins.get)))
 
-$ starlark coins.star
+$ pkgscript coins.star
 By name:	dime, nickel, penny, quarter
 By value:	penny, nickel, dime, quarter
 ```
@@ -76,7 +76,7 @@ By value:	penny, nickel, dime, quarter
 Interact with the read-eval-print loop (REPL):
 
 ```
-$ starlark
+$ pkgscript
 >>> def fibonacci(n):
 ...    res = list(range(n))
 ...    for i in res[2:]:
@@ -93,23 +93,23 @@ When you have finished, type `Ctrl-D` to close the REPL's input stream.
 Embed the interpreter in your Go program:
 
 ```
-import "go.starlark.net/starlark"
+import "go.pkgscript.net/pkgscript"
 
 // Execute Starlark program in a file.
-thread := &starlark.Thread{Name: "my thread"}
-globals, err := starlark.ExecFile(thread, "fibonacci.star", nil, nil)
+thread := &pkgscript.Thread{Name: "my thread"}
+globals, err := pkgscript.ExecFile(thread, "fibonacci.star", nil, nil)
 if err != nil { ... }
 
 // Retrieve a module global.
 fibonacci := globals["fibonacci"]
 
 // Call Starlark function from Go.
-v, err := starlark.Call(thread, fibonacci, starlark.Tuple{starlark.MakeInt(10)}, nil)
+v, err := pkgscript.Call(thread, fibonacci, pkgscript.Tuple{pkgscript.MakeInt(10)}, nil)
 if err != nil { ... }
 fmt.Printf("fibonacci(10) = %v\n", v) // fibonacci(10) = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 ```
 
-See [starlark/example_test.go](starlark/example_test.go) for more examples.
+See [pkgscript/example_test.go](pkgscript/example_test.go) for more examples.
 
 ### Contributing
 
@@ -128,7 +128,7 @@ match the behavior of [the Java implementation](https://github.com/bazelbuild/ba
 used by Bazel and maintained by the Bazel team.
 For that reason, proposals to change the language itself should
 generally be directed to [the Starlark site](
-https://github.com/bazelbuild/starlark/), not to the maintainers of this
+https://github.com/bazelbuild/pkgscript/), not to the maintainers of this
 project.
 Only once there is consensus that a language change is desirable may
 its Go implementation proceed.
@@ -175,6 +175,6 @@ Starlark in Go is Copyright (c) 2018 The Bazel Authors.
 All rights reserved.
 
 It is provided under a 3-clause BSD license:
-[LICENSE](https://github.com/google/starlark-go/blob/master/LICENSE).
+[LICENSE](https://github.com/google/pkgscript-go/blob/master/LICENSE).
 
 Starlark in Go is not an official Google product.

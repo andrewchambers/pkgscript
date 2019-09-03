@@ -204,13 +204,13 @@ pass`, "pass newline pass EOF"}, // consecutive newlines are consolidated
 		{"0123.1", `1.231000e+02 EOF`},
 		// github.com/google/skylark/issues/16
 		{"x ! 0", "foo.star:1:3: unexpected input character '!'"},
-		// github.com/google/starlark-go/issues/80
+		// github.com/google/pkgscript-go/issues/80
 		{"([{<>}])", "( [ { < > } ] ) EOF"},
 		{"f();", "f ( ) ; EOF"},
-		// github.com/google/starlark-go/issues/104
+		// github.com/google/pkgscript-go/issues/104
 		{"def f():\n  if x:\n    pass\n  ", `def f ( ) : newline indent if x : newline indent pass newline outdent outdent EOF`},
 		{`while cond: pass`, "while cond : pass EOF"},
-		// github.com/google/starlark-go/issues/107
+		// github.com/google/pkgscript-go/issues/107
 		{"~= ~= 5", "~ = ~ = 5 EOF"},
 		{"0in", "0 in EOF"},
 		{"0or", "foo.star:1:3: invalid octal literal"},
@@ -227,10 +227,10 @@ pass`, "pass newline pass EOF"}, // consecutive newlines are consolidated
 	}
 }
 
-// dataFile is the same as starlarktest.DataFile.
+// dataFile is the same as pkgscripttest.DataFile.
 // We make a copy to avoid a dependency cycle.
 var dataFile = func(pkgdir, filename string) string {
-	return filepath.Join(build.Default.GOPATH, "src/go.starlark.net", pkgdir, filename)
+	return filepath.Join(build.Default.GOPATH, "src/github.com/andrewchambers/pkgscript", pkgdir, filename)
 }
 
 func BenchmarkScan(b *testing.B) {
