@@ -10,7 +10,7 @@
 // free variable.  It also sets the Locals array of a File for locals
 // bound by top-level comprehensions and load statements.
 // Identifiers for global variables do not get an index.
-package resolve // import "go.starlark.net/resolve"
+package resolve // import "github.com/andrewchambers/pkgscript/resolve"
 
 // All references to names are statically resolved.  Names may be
 // predeclared, global, or local to a function or file.
@@ -87,8 +87,8 @@ import (
 	"sort"
 	"strings"
 
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/spell"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 const debug = false
@@ -115,11 +115,11 @@ var (
 // a pre-declared identifier (visible in the current module) or a
 // universal identifier (visible in every module).
 // Clients should typically pass predeclared.Has for the first and
-// starlark.Universe.Has for the second, where predeclared is the
-// module's StringDict of predeclared names and starlark.Universe is the
+// pkgscript.Universe.Has for the second, where predeclared is the
+// module's StringDict of predeclared names and pkgscript.Universe is the
 // standard set of built-ins.
 // The isUniverse predicate is supplied a parameter to avoid a cyclic
-// dependency upon starlark.Universe, not because users should ever need
+// dependency upon pkgscript.Universe, not because users should ever need
 // to redefine it.
 func File(file *syntax.File, isPredeclared, isUniversal func(name string) bool) error {
 	r := newResolver(isPredeclared, isUniversal)

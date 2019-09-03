@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"go.starlark.net/internal/chunkedfile"
-	"go.starlark.net/resolve"
-	"go.starlark.net/starlarktest"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/chunkedfile"
+	"github.com/andrewchambers/pkgscript/resolve"
+	"github.com/andrewchambers/pkgscript/pkgscripttest"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 func setOptions(src string) {
@@ -30,7 +30,7 @@ func option(chunk, name string) bool {
 
 func TestResolve(t *testing.T) {
 	defer setOptions("")
-	filename := starlarktest.DataFile("resolve", "testdata/resolve.star")
+	filename := pkgscripttest.DataFile("resolve", "testdata/resolve.star")
 	for _, chunk := range chunkedfile.Read(filename, t) {
 		f, err := syntax.Parse(filename, chunk.Source, 0)
 		if err != nil {

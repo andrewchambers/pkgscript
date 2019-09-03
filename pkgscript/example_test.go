@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark_test
+package pkgscript_test
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"go.starlark.net/starlark"
+	"github.com/andrewchambers/pkgscript/pkgscript"
 )
 
 // ExampleExecFile demonstrates a simple embedding
@@ -30,31 +30,31 @@ squares = [x*x for x in range(10)]
 
 	// repeat(str, n=1) is a Go function called from Starlark.
 	// It behaves like the 'string * int' operation.
-	repeat := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	repeat := func(thread *pkgscript.Thread, b *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
 		var s string
 		var n int = 1
-		if err := starlark.UnpackArgs(b.Name(), args, kwargs, "s", &s, "n?", &n); err != nil {
+		if err := pkgscript.UnpackArgs(b.Name(), args, kwargs, "s", &s, "n?", &n); err != nil {
 			return nil, err
 		}
-		return starlark.String(strings.Repeat(s, n)), nil
+		return pkgscript.String(strings.Repeat(s, n)), nil
 	}
 
 	// The Thread defines the behavior of the built-in 'print' function.
-	thread := &starlark.Thread{
+	thread := &pkgscript.Thread{
 		Name:  "example",
-		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
+		Print: func(_ *pkgscript.Thread, msg string) { fmt.Println(msg) },
 	}
 
 	// This dictionary defines the pre-declared environment.
-	predeclared := starlark.StringDict{
-		"greeting": starlark.String("hello"),
-		"repeat":   starlark.NewBuiltin("repeat", repeat),
+	predeclared := pkgscript.StringDict{
+		"greeting": pkgscript.String("hello"),
+		"repeat":   pkgscript.NewBuiltin("repeat", repeat),
 	}
 
 	// Execute a program.
-	globals, err := starlark.ExecFile(thread, "apparent/filename.star", data, predeclared)
+	globals, err := pkgscript.ExecFile(thread, "apparent/filename.star", data, predeclared)
 	if err != nil {
-		if evalErr, ok := err.(*starlark.EvalError); ok {
+		if evalErr, ok := err.(*pkgscript.EvalError); ok {
 			log.Fatal(evalErr.Backtrace())
 		}
 		log.Fatal(err)
@@ -86,14 +86,14 @@ func ExampleThread_Load_sequential() {
 	}
 
 	type entry struct {
-		globals starlark.StringDict
+		globals pkgscript.StringDict
 		err     error
 	}
 
 	cache := make(map[string]*entry)
 
-	var load func(_ *starlark.Thread, module string) (starlark.StringDict, error)
-	load = func(_ *starlark.Thread, module string) (starlark.StringDict, error) {
+	var load func(_ *pkgscript.Thread, module string) (pkgscript.StringDict, error)
+	load = func(_ *pkgscript.Thread, module string) (pkgscript.StringDict, error) {
 		e, ok := cache[module]
 		if e == nil {
 			if ok {
@@ -106,8 +106,8 @@ func ExampleThread_Load_sequential() {
 
 			// Load and initialize the module in a new thread.
 			data := fakeFilesystem[module]
-			thread := &starlark.Thread{Name: "exec " + module, Load: load}
-			globals, err := starlark.ExecFile(thread, module, data, nil)
+			thread := &pkgscript.Thread{Name: "exec " + module, Load: load}
+			globals, err := pkgscript.ExecFile(thread, module, data, nil)
 			e = &entry{globals, err}
 
 			// Update the cache.
@@ -116,7 +116,7 @@ func ExampleThread_Load_sequential() {
 		return e.globals, e.err
 	}
 
-	thread := &starlark.Thread{Name: "exec c.star", Load: load}
+	thread := &pkgscript.Thread{Name: "exec c.star", Load: load}
 	globals, err := load(thread, "c.star")
 	if err != nil {
 		log.Fatal(err)
@@ -222,17 +222,17 @@ type cache struct {
 
 type entry struct {
 	owner   unsafe.Pointer // a *cycleChecker; see cycleCheck
-	globals starlark.StringDict
+	globals pkgscript.StringDict
 	err     error
 	ready   chan struct{}
 }
 
-func (c *cache) Load(module string) (starlark.StringDict, error) {
+func (c *cache) Load(module string) (pkgscript.StringDict, error) {
 	return c.get(new(cycleChecker), module)
 }
 
 // get loads and returns an entry (if not already loaded).
-func (c *cache) get(cc *cycleChecker, module string) (starlark.StringDict, error) {
+func (c *cache) get(cc *cycleChecker, module string) (pkgscript.StringDict, error) {
 	c.cacheMu.Lock()
 	e := c.cache[module]
 	if e != nil {
@@ -264,17 +264,17 @@ func (c *cache) get(cc *cycleChecker, module string) (starlark.StringDict, error
 	return e.globals, e.err
 }
 
-func (c *cache) doLoad(cc *cycleChecker, module string) (starlark.StringDict, error) {
-	thread := &starlark.Thread{
+func (c *cache) doLoad(cc *cycleChecker, module string) (pkgscript.StringDict, error) {
+	thread := &pkgscript.Thread{
 		Name:  "exec " + module,
-		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
-		Load: func(_ *starlark.Thread, module string) (starlark.StringDict, error) {
+		Print: func(_ *pkgscript.Thread, msg string) { fmt.Println(msg) },
+		Load: func(_ *pkgscript.Thread, module string) (pkgscript.StringDict, error) {
 			// Tunnel the cycle-checker state for this "thread of loading".
 			return c.get(cc, module)
 		},
 	}
 	data := c.fakeFilesystem[module]
-	return starlark.ExecFile(thread, module, data, nil)
+	return pkgscript.ExecFile(thread, module, data, nil)
 }
 
 // -- concurrent cycle checking --

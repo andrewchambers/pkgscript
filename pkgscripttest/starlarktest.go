@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package starlarktest defines utilities for testing Starlark programs.
+// Package pkgscripttest defines utilities for testing Starlark programs.
 //
 // Clients can call LoadAssertModule to load a module that defines
 // several functions useful for testing.  See assert.star for its
@@ -10,7 +10,7 @@
 //
 // The assert.error function, which reports errors to the current Go
 // testing.T, requires that clients call SetTest(thread, t) before use.
-package starlarktest // import "go.starlark.net/starlarktest"
+package pkgscripttest // import "github.com/andrewchambers/pkgscript/pkgscripttest"
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ import (
 	"strings"
 	"sync"
 
-	"go.starlark.net/starlark"
-	"go.starlark.net/starlarkstruct"
+	"github.com/andrewchambers/pkgscript/pkgscript"
+	"github.com/andrewchambers/pkgscript/pkgscriptstruct"
 )
 
 const localKey = "Reporter"
@@ -35,72 +35,72 @@ type Reporter interface {
 // SetReporter associates an error reporter (such as a testing.T in
 // a Go test) with the Starlark thread so that Starlark programs may
 // report errors to it.
-func SetReporter(thread *starlark.Thread, r Reporter) {
+func SetReporter(thread *pkgscript.Thread, r Reporter) {
 	thread.SetLocal(localKey, r)
 }
 
 // GetReporter returns the Starlark thread's error reporter.
 // It must be preceded by a call to SetReporter.
-func GetReporter(thread *starlark.Thread) Reporter {
+func GetReporter(thread *pkgscript.Thread) Reporter {
 	r, ok := thread.Local(localKey).(Reporter)
 	if !ok {
-		panic("internal error: starlarktest.SetReporter was not called")
+		panic("internal error: pkgscripttest.SetReporter was not called")
 	}
 	return r
 }
 
 var (
 	once      sync.Once
-	assert    starlark.StringDict
+	assert    pkgscript.StringDict
 	assertErr error
 )
 
 // LoadAssertModule loads the assert module.
 // It is concurrency-safe and idempotent.
-func LoadAssertModule() (starlark.StringDict, error) {
+func LoadAssertModule() (pkgscript.StringDict, error) {
 	once.Do(func() {
-		predeclared := starlark.StringDict{
-			"error":   starlark.NewBuiltin("error", error_),
-			"catch":   starlark.NewBuiltin("catch", catch),
-			"matches": starlark.NewBuiltin("matches", matches),
-			"module":  starlark.NewBuiltin("module", starlarkstruct.MakeModule),
-			"_freeze": starlark.NewBuiltin("freeze", freeze),
+		predeclared := pkgscript.StringDict{
+			"error":   pkgscript.NewBuiltin("error", error_),
+			"catch":   pkgscript.NewBuiltin("catch", catch),
+			"matches": pkgscript.NewBuiltin("matches", matches),
+			"module":  pkgscript.NewBuiltin("module", pkgscriptstruct.MakeModule),
+			"_freeze": pkgscript.NewBuiltin("freeze", freeze),
 		}
-		filename := DataFile("starlarktest", "assert.star")
-		thread := new(starlark.Thread)
-		assert, assertErr = starlark.ExecFile(thread, filename, nil, predeclared)
+		filename := DataFile("pkgscripttest", "assert.star")
+		thread := new(pkgscript.Thread)
+		assert, assertErr = pkgscript.ExecFile(thread, filename, nil, predeclared)
 	})
 	return assert, assertErr
 }
 
 // catch(f) evaluates f() and returns its evaluation error message
 // if it failed or None if it succeeded.
-func catch(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	var fn starlark.Callable
-	if err := starlark.UnpackArgs("catch", args, kwargs, "fn", &fn); err != nil {
+func catch(thread *pkgscript.Thread, _ *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
+	var fn pkgscript.Callable
+	if err := pkgscript.UnpackArgs("catch", args, kwargs, "fn", &fn); err != nil {
 		return nil, err
 	}
-	if _, err := starlark.Call(thread, fn, nil, nil); err != nil {
-		return starlark.String(err.Error()), nil
+	if _, err := pkgscript.Call(thread, fn, nil, nil); err != nil {
+		return pkgscript.String(err.Error()), nil
 	}
-	return starlark.None, nil
+	return pkgscript.None, nil
 }
 
 // matches(pattern, str) reports whether string str matches the regular expression pattern.
-func matches(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func matches(thread *pkgscript.Thread, _ *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
 	var pattern, str string
-	if err := starlark.UnpackArgs("matches", args, kwargs, "pattern", &pattern, "str", &str); err != nil {
+	if err := pkgscript.UnpackArgs("matches", args, kwargs, "pattern", &pattern, "str", &str); err != nil {
 		return nil, err
 	}
 	ok, err := regexp.MatchString(pattern, str)
 	if err != nil {
 		return nil, fmt.Errorf("matches: %s", err)
 	}
-	return starlark.Bool(ok), nil
+	return pkgscript.Bool(ok), nil
 }
 
 // error(x) reports an error to the Go test framework.
-func error_(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func error_(thread *pkgscript.Thread, _ *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("error: got %d arguments, want 1", len(args))
 	}
@@ -108,17 +108,17 @@ func error_(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 	stk := thread.CallStack()
 	stk.Pop()
 	fmt.Fprintf(buf, "%sError: ", stk)
-	if s, ok := starlark.AsString(args[0]); ok {
+	if s, ok := pkgscript.AsString(args[0]); ok {
 		buf.WriteString(s)
 	} else {
 		buf.WriteString(args[0].String())
 	}
 	GetReporter(thread).Error(buf.String())
-	return starlark.None, nil
+	return pkgscript.None, nil
 }
 
 // freeze(x) freezes its operand.
-func freeze(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func freeze(thread *pkgscript.Thread, _ *pkgscript.Builtin, args pkgscript.Tuple, kwargs []pkgscript.Tuple) (pkgscript.Value, error) {
 	if len(kwargs) > 0 {
 		return nil, fmt.Errorf("freeze does not accept keyword arguments")
 	}
@@ -134,5 +134,5 @@ func freeze(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 // 'go build', under which a test runs in its package directory,
 // and Blaze, under which a test runs in the root of the tree.
 var DataFile = func(pkgdir, filename string) string {
-	return filepath.Join(build.Default.GOPATH, "src/go.starlark.net", pkgdir, filename)
+	return filepath.Join(build.Default.GOPATH, "src/github.com/andrewchambers/pkgscript", pkgdir, filename)
 }

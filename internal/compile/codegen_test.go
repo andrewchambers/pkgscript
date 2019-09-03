@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/resolve"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // TestPlusFolding ensures that the compiler generates optimized code for

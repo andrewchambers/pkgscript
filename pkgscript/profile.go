@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark
+package pkgscript
 
 // This file defines a simple execution-time profiler for Starlark.
 // It measures the wall time spent executing Starlark code, and emits a
@@ -71,7 +71,7 @@ import (
 	"time"
 	"unsafe"
 
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // StartProfile enables time profiling of all Starlark threads,

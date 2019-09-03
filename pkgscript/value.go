@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package starlark provides a Starlark interpreter.
+// Package pkgscript provides a Starlark interpreter.
 //
 // Starlark values are represented by the Value interface.
 // The following built-in Value types are known to the evaluator:
@@ -62,7 +62,7 @@
 // returns an EvalError from which the application may obtain a
 // backtrace of active Starlark calls.
 //
-package starlark // import "go.starlark.net/starlark"
+package pkgscript // import "github.com/andrewchambers/pkgscript/pkgscript"
 
 // This file defines the data types of Starlark and their basic operations.
 
@@ -75,8 +75,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"go.starlark.net/internal/compile"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/compile"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // Value is a value in the Starlark interpreter.

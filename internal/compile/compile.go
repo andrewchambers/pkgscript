@@ -24,7 +24,7 @@
 // Operands, logically uint32s, are encoded using little-endian 7-bit
 // varints, the top bit indicating that more bytes follow.
 //
-package compile // import "go.starlark.net/internal/compile"
+package compile // import "github.com/andrewchambers/pkgscript/internal/compile"
 
 import (
 	"bytes"
@@ -35,8 +35,8 @@ import (
 	"strconv"
 	"sync"
 
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/resolve"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // Disassemble causes the assembly code for each function
@@ -1684,7 +1684,7 @@ func (fcomp *fcomp) args(call *syntax.CallExpr) (op Opcode, arg uint32) {
 	// Starlark-in-Java historically used a third order:
 	//  Lexical: 1 2 3 4 5 6 (all args evaluated left-to-right)
 	//
-	// After discussion in github.com/bazelbuild/starlark#13, the
+	// After discussion in github.com/bazelbuild/pkgscript#13, the
 	// spec now requires Starlark to statically reject named
 	// arguments after *args (e.g. y=5), and to use Python2-style
 	// evaluation order. This is both easy to implement and

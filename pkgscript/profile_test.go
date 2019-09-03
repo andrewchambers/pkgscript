@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark_test
+package pkgscript_test
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"go.starlark.net/starlark"
+	"github.com/andrewchambers/pkgscript/pkgscript"
 )
 
 // TestProfile is a simple integration test that the profiler
@@ -25,7 +25,7 @@ func TestProfile(t *testing.T) {
 	}
 	defer prof.Close()
 	defer os.Remove(prof.Name())
-	if err := starlark.StartProfile(prof); err != nil {
+	if err := pkgscript.StartProfile(prof); err != nil {
 		t.Fatal(err)
 	}
 
@@ -39,12 +39,12 @@ def fibonacci(n):
 fibonacci(100000)
 `
 
-	thread := new(starlark.Thread)
-	if _, err := starlark.ExecFile(thread, "foo.star", src, nil); err != nil {
-		_ = starlark.StopProfile()
+	thread := new(pkgscript.Thread)
+	if _, err := pkgscript.ExecFile(thread, "foo.star", src, nil); err != nil {
+		_ = pkgscript.StopProfile()
 		t.Fatal(err)
 	}
-	if err := starlark.StopProfile(); err != nil {
+	if err := pkgscript.StopProfile(); err != nil {
 		t.Fatal(err)
 	}
 	prof.Sync()

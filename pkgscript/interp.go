@@ -1,4 +1,4 @@
-package starlark
+package pkgscript
 
 // This file defines the bytecode interpreter.
 
@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	"go.starlark.net/internal/compile"
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/compile"
+	"github.com/andrewchambers/pkgscript/internal/spell"
+	"github.com/andrewchambers/pkgscript/resolve"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 const vmdebug = false // TODO(adonovan): use a bitfield of specific kinds of error.

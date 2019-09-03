@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package starlark
+package pkgscript
 
 import (
 	"fmt"
@@ -17,10 +17,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"go.starlark.net/internal/compile"
-	"go.starlark.net/internal/spell"
-	"go.starlark.net/resolve"
-	"go.starlark.net/syntax"
+	"github.com/andrewchambers/pkgscript/internal/compile"
+	"github.com/andrewchambers/pkgscript/internal/spell"
+	"github.com/andrewchambers/pkgscript/resolve"
+	"github.com/andrewchambers/pkgscript/syntax"
 )
 
 // A Thread contains the state of a Starlark thread,
@@ -95,7 +95,7 @@ func (thread *Thread) CallStackDepth() int { return len(thread.stack) }
 
 // A StringDict is a mapping from names to values, and represents
 // an environment such as the global variables of a module.
-// It is not a true starlark.Value.
+// It is not a true pkgscript.Value.
 type StringDict map[string]Value
 
 // Keys returns a new sorted slice of d's keys.
@@ -1293,7 +1293,7 @@ func findParam(params []compile.Binding, name string) int {
 	return -1
 }
 
-// https://github.com/google/starlark-go/blob/master/doc/spec.md#string-interpolation
+// https://github.com/google/pkgscript-go/blob/master/doc/spec.md#string-interpolation
 func interpolate(format string, x Value) (Value, error) {
 	buf := new(strings.Builder)
 	index := 0
