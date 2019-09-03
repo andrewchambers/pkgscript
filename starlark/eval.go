@@ -44,7 +44,7 @@ type Thread struct {
 	// The error message need not include the module name.
 	//
 	// See example_test.go for some example implementations of Load.
-	Load func(thread *Thread, module string) (StringDict, error)
+	Load func(thread *Thread, module Value) (StringDict, error)
 
 	// locals holds arbitrary "thread-local" Go values belonging to the client.
 	// They are accessible to the client but not to any Starlark program.
@@ -240,17 +240,6 @@ const CompilerVersion = compile.Version
 func (prog *Program) Filename() string { return prog.compiled.Toplevel.Pos.Filename() }
 
 func (prog *Program) String() string { return prog.Filename() }
-
-// NumLoads returns the number of load statements in the compiled program.
-func (prog *Program) NumLoads() int { return len(prog.compiled.Loads) }
-
-// Load(i) returns the name and position of the i'th module directly
-// loaded by this one, where 0 <= i < NumLoads().
-// The name is unresolved---exactly as it appears in the source.
-func (prog *Program) Load(i int) (string, syntax.Position) {
-	id := prog.compiled.Loads[i]
-	return id.Name, id.Pos
-}
 
 // WriteTo writes the compiled module to the specified output stream.
 func (prog *Program) Write(out io.Writer) error {

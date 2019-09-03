@@ -173,7 +173,7 @@ func (x *IfStmt) Span() (start, end Position) {
 type LoadStmt struct {
 	commentsRef
 	Load   Position
-	Module *Literal // a string
+	Module Expr
 	From   []*Ident // name defined in loading module
 	To     []*Ident // name in loaded module
 	Rparen Position
@@ -182,9 +182,6 @@ type LoadStmt struct {
 func (x *LoadStmt) Span() (start, end Position) {
 	return x.Load, x.Rparen
 }
-
-// ModuleName returns the name of the module loaded by this statement.
-func (x *LoadStmt) ModuleName() string { return x.Module.Value.(string) }
 
 // A BranchStmt changes the flow of control: break, continue, pass.
 type BranchStmt struct {

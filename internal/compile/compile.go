@@ -304,7 +304,6 @@ func (op Opcode) String() string {
 // Programs are serialized by the Program.Encode method,
 // which must be updated whenever this declaration is changed.
 type Program struct {
-	Loads     []Binding     // name (really, string) and position of each load stmt
 	Names     []string      // names of attributes and predeclared variables
 	Constants []interface{} // = string | int64 | float64 | *big.Int
 	Functions []*Funcode
@@ -1210,12 +1209,7 @@ func (fcomp *fcomp) stmt(stmt syntax.Stmt) {
 		for i := range stmt.From {
 			fcomp.string(stmt.From[i].Name)
 		}
-		module := stmt.Module.Value.(string)
-		fcomp.pcomp.prog.Loads = append(fcomp.pcomp.prog.Loads, Binding{
-			Name: module,
-			Pos:  stmt.Module.TokenPos,
-		})
-		fcomp.string(module)
+		fcomp.expr(stmt.Module)
 		fcomp.setPos(stmt.Load)
 		fcomp.emit1(LOAD, uint32(len(stmt.From)))
 		for i := range stmt.To {

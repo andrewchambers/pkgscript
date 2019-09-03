@@ -98,7 +98,6 @@ func (prog *Program) Encode() []byte {
 	e.p = append(e.p, "????"...) // string data offset; filled in later
 	e.int(Version)
 	e.string(prog.Toplevel.Pos.Filename())
-	e.bindings(prog.Loads)
 	e.int(len(prog.Names))
 	for _, name := range prog.Names {
 		e.string(name)
@@ -234,8 +233,6 @@ func DecodeProgram(data []byte) (_ *Program, err error) {
 	filename := d.string()
 	d.filename = &filename
 
-	loads := d.bindings()
-
 	names := make([]string, d.int())
 	for i := range names {
 		names[i] = d.string()
@@ -266,7 +263,6 @@ func DecodeProgram(data []byte) (_ *Program, err error) {
 	}
 
 	prog := &Program{
-		Loads:     loads,
 		Names:     names,
 		Constants: constants,
 		Globals:   globals,
