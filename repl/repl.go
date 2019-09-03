@@ -180,7 +180,7 @@ func PrintError(err error) {
 // MakeLoad returns a simple sequential implementation of module loading
 // suitable for use in the REPL.
 // Each function returned by MakeLoad accesses a distinct private cache.
-func MakeLoad() func(thread *starlark.Thread, module string) (starlark.StringDict, error) {
+func MakeLoad() func(thread *starlark.Thread, modval starlark.Value) (starlark.StringDict, error) {
 	type entry struct {
 		globals starlark.StringDict
 		err     error
@@ -188,7 +188,12 @@ func MakeLoad() func(thread *starlark.Thread, module string) (starlark.StringDic
 
 	var cache = make(map[string]*entry)
 
-	return func(thread *starlark.Thread, module string) (starlark.StringDict, error) {
+	return func(thread *starlark.Thread, modval starlark.Value) (starlark.StringDict, error) {
+		module_s, ok := modval.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("module not a string")
+		}
+		module := string(module_s)
 		e, ok := cache[module]
 		if e == nil {
 			if ok {

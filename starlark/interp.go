@@ -491,7 +491,7 @@ loop:
 
 		case compile.LOAD:
 			n := int(arg)
-			module := string(stack[sp-1].(String))
+			module := stack[sp-1]
 			sp--
 
 			if thread.Load == nil {

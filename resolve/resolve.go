@@ -532,9 +532,8 @@ func (r *resolver) stmt(stmt syntax.Stmt) {
 		}
 
 	case *syntax.LoadStmt:
-		if r.container().function != nil {
-			r.errorf(stmt.Load, "load statement within a function")
-		}
+
+		r.expr(stmt.Module)
 
 		for i, from := range stmt.From {
 			if from.Name == "" {

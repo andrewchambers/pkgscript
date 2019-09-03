@@ -91,7 +91,6 @@ const (
 	IF
 	IN
 	LAMBDA
-	LOAD
 	NOT
 	NOT_IN // synthesized by parser from NOT IN
 	OR
@@ -179,7 +178,6 @@ var tokenNames = [...]string{
 	IF:             "if",
 	IN:             "in",
 	LAMBDA:         "lambda",
-	LOAD:           "load",
 	NOT:            "not",
 	NOT_IN:         "not in",
 	OR:             "or",
@@ -1199,7 +1197,6 @@ var keywordToken = map[string]Token{
 	"if":       IF,
 	"in":       IN,
 	"lambda":   LAMBDA,
-	"load":     LOAD,
 	"not":      NOT,
 	"or":       OR,
 	"pass":     PASS,

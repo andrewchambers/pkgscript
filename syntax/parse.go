@@ -294,8 +294,10 @@ func (p *parser) parseSmallStmt() Stmt {
 		pos := p.nextToken() // consume it
 		return &BranchStmt{Token: tok, TokenPos: pos}
 
-	case LOAD:
-		return p.parseLoadStmt()
+	case IDENT:
+		if p.tokval.raw == "load" {
+			return p.parseLoadStmt()
+		}
 	}
 
 	// Assignment
@@ -316,11 +318,7 @@ func (p *parser) parseSmallStmt() Stmt {
 func (p *parser) parseLoadStmt() *LoadStmt {
 	loadPos := p.nextToken() // consume LOAD
 	lparen := p.consume(LPAREN)
-
-	if p.tok != STRING {
-		p.in.errorf(p.in.pos, "first operand of load statement must be a string literal")
-	}
-	module := p.parsePrimary().(*Literal)
+	module := p.parseTest()
 
 	var from, to []*Ident
 	for p.tok != RPAREN && p.tok != EOF {
